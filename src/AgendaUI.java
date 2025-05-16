@@ -1,6 +1,13 @@
 import javax.swing.*;
 import java.awt.*;
 import javax.swing.border.EmptyBorder;
+import org.apache.poi.ss.usermodel.*;
+import org.apache.poi.ss.usermodel.WorkbookFactory;
+
+import java.awt.Color;
+import java.io.FileInputStream;
+import java.util.ArrayList;
+import java.util.List;
 
 public class AgendaUI extends JFrame {
     private Agenda agenda;
@@ -16,7 +23,7 @@ public class AgendaUI extends JFrame {
         setLayout(new BorderLayout());
         // Cambiar el icono de la ventana
         setIconImage(new ImageIcon(getClass().getResource("/imagenes/img_generation.jpg")).getImage());
-         // Ingresar datos, informaación
+        // Ingresar datos, informaación
         JPanel inputPanel = new JPanel(new GridLayout(3, 2, 5, 5)); // Espaciado entre campos
         inputPanel.add(new JLabel("Nombre:"));
         nombreField = new JTextField();
@@ -34,17 +41,20 @@ public class AgendaUI extends JFrame {
         JButton listarBtn = new JButton("Listar");
         JButton eliminarBtn = new JButton("Eliminar");
         JButton modificarBtn = new JButton("Modificar");
+        JButton cargarExcelBtn = new JButton("Cargar Excel");
         Dimension btnSize = new Dimension(90, 25);
         agregarBtn.setPreferredSize(btnSize);
         buscarBtn.setPreferredSize(btnSize);
         listarBtn.setPreferredSize(btnSize);
         eliminarBtn.setPreferredSize(btnSize);
         modificarBtn.setPreferredSize(btnSize);
+        cargarExcelBtn.setPreferredSize(btnSize);
         buttonPanel.add(agregarBtn);
         buttonPanel.add(buscarBtn);
         buttonPanel.add(listarBtn);
         buttonPanel.add(eliminarBtn);
         buttonPanel.add(modificarBtn);
+        buttonPanel.add(cargarExcelBtn);
         //cambiar color del boton eliminar
         eliminarBtn.setBackground(Color.RED);
         eliminarBtn.setForeground(Color.WHITE);
@@ -78,8 +88,9 @@ public class AgendaUI extends JFrame {
             modificarTelefono();
             limpiarInputs();
         });
+        cargarExcelBtn.addActionListener(e -> cargarContactosDesdeExcel());
     }
- // Se crea función para limpiar datos luego de darle clic a los botones
+    // Se crea función para limpiar datos luego de darle clic a los botones
     private void limpiarInputs() {
         nombreField.setText("");
         apellidoField.setText("");
@@ -98,7 +109,7 @@ public class AgendaUI extends JFrame {
             outputArea.append("Por favor, complete todos los campos.\n");
         }
     }
-  // se llama funciones de agenta pero primero se validan datos
+    // se llama funciones de agenta pero primero se validan datos
     private void buscarContacto() {
         String nombre = nombreField.getText();
         String apellido = apellidoField.getText();
@@ -147,6 +158,61 @@ public class AgendaUI extends JFrame {
             outputArea.append(mensaje + "\n");
         } else {
             outputArea.append("Complete todos los campos para modificar.\n");
+        }
+    }
+
+    private void cargarContactosDesdeExcel() {
+        JFileChooser fileChooser = new JFileChooser();
+        int result = fileChooser.showOpenDialog(this);
+        if (result == JFileChooser.APPROVE_OPTION) {
+            java.io.File file = fileChooser.getSelectedFile();
+            try {
+                List<String> errores = new ArrayList<>();
+                FileInputStream fis = new FileInputStream(file);
+                Workbook workbook = WorkbookFactory.create(fis);
+                Sheet sheet = workbook.getSheetAt(0);
+                for (Row row : sheet) {
+                    if (row.getRowNum() == 0) continue; // Saltar encabezado
+                    String nombre = getCellStringValue(row.getCell(0));
+                    String apellido = getCellStringValue(row.getCell(1));
+                    String telefono = getCellStringValue(row.getCell(2));
+                    if (!nombre.isEmpty() && !apellido.isEmpty() && !telefono.isEmpty()) {
+                        Contacto contacto = new Contacto(nombre, apellido, telefono);
+                        String mensaje = agenda.agregarContacto(contacto);
+                        if (!mensaje.toLowerCase().contains("exitosamente")) {
+                            errores.add(nombre + " " + apellido + ": " + mensaje);
+                        }
+                    }
+                }
+                workbook.close();
+                fis.close();
+                outputArea.append("Contactos cargados desde Excel con éxito.\n");
+                listarContactos();
+                if (!errores.isEmpty()) {
+                    outputArea.append("Errores al cargar:\n");
+                    for (String err : errores) {
+                        outputArea.append(err + "\n");
+                    }
+                }
+            } catch (Exception ex) {
+                outputArea.append("Error al leer el archivo Excel: " + ex.getMessage() + "\n");
+            }
+        }
+    }
+    // Método auxiliar para obtener el valor de una celda como String
+    private String getCellStringValue(Cell cell) {
+        if (cell == null) return "";
+        switch (cell.getCellType()) {
+            case STRING:
+                return cell.getStringCellValue();
+            case NUMERIC:
+                return String.valueOf((long)cell.getNumericCellValue());
+            case BOOLEAN:
+                return String.valueOf(cell.getBooleanCellValue());
+            case FORMULA:
+                return cell.getCellFormula();
+            default:
+                return "";
         }
     }
 }
