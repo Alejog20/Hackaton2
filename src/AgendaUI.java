@@ -17,7 +17,7 @@ public class AgendaUI extends JFrame {
     public AgendaUI(Agenda agenda) {
         this.agenda = agenda;
         setTitle("Agenda de Contactos");
-        setSize(500, 400);
+        setSize(600, 400);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setLocationRelativeTo(null);
         setLayout(new BorderLayout());
