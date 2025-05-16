@@ -1,17 +1,18 @@
 import javax.swing.*;
 import java.awt.*;
-import javax.swing.border.EmptyBorder;
 
 public class AgendaUI extends JFrame {
-    private Agenda agenda;
-    private JTextField nombreField, apellidoField, telefonoField;
+    private  transient Agenda agenda;
+    private JTextField nombreField;
+    private JTextField apellidoField;
+    private JTextField telefonoField;
     private JTextArea outputArea;
 
     public AgendaUI(Agenda agenda) {
         this.agenda = agenda;
         setTitle("Agenda de Contactos");
         setSize(500, 400);
-        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        setDefaultCloseOperation(EXIT_ON_CLOSE);
         setLocationRelativeTo(null);
         setLayout(new BorderLayout());
         // Cambiar el icono de la ventana
